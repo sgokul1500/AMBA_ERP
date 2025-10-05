@@ -29,7 +29,7 @@ st.sidebar.info("Select a page above to interact with the ERP system prototype!"
 # -------------------------------
 # Header
 # -------------------------------
-st.markdown("<h1 style='text-align: center; color: #4B0082;'>🌟 Amba ERP  Prototype 🌟</h1>", unsafe_allow_html=True)
+st.markdown("<h1 style='text-align: center; color: #4B0082;'> Amba ERP  Prototype </h1>", unsafe_allow_html=True)
 
 # -------------------------------
 # Page: Customer Overview
@@ -104,6 +104,6 @@ elif page == "📦 Inventory Dashboard":
 # -------------------------------
 st.markdown("---")
 st.markdown(
-    "<h4 style='text-align: center; color: #FF1493;'>Developed by  Gokul Srinivasan 😎</h4>",
+    "<h4 style='text-align: center; color: #FF1493;'>Developed by  Gokul Srinivasan </h4>",
     unsafe_allow_html=True
 )
