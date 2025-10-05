@@ -31,6 +31,9 @@ Amba Enterprises Limited is a respected manufacturer of transformer laminations 
 
 ## ️3. System Architecture & Technology Stack
 
+![ERP System Diagram](images/System_Architecture.png)
+
+
 **Technology Stack:**
 - **Frontend:** Streamlit — quick UI creation, interactive forms, and dashboards.
 - **Backend:** Python — core logic, data processing, and SQL generation.
