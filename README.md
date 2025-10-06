@@ -83,27 +83,125 @@ Amba Enterprises Limited is a respected manufacturer of transformer laminations 
 ## 5. Detailed Implementation Flow
 
 ### Workflow for Creating a New Sales Order
-1. User opens the "Create New Sales Order" form.
-2. Enters **Customer Name**, selects **Product**, inputs **Quantity** and **Amount Collected**, optionally sets **Last Payment Date**.
-3. On **Submit**:
-   - Form validates required fields.
-   - Checks inventory availability.
-   - Generates SQL INSERT for `Orders` table.
-   - Generates SQL INSERT for `InventoryLog`.
-4. Displays SQL statements (prototype does not commit to database).
+1️⃣ User Interaction
 
-### REST API Endpoints (Illustrative)
-- `POST /api/v1/orders` → Create a new order
-- `GET /api/v1/customers` → Fetch customer list
-- `GET /api/v1/inventory` → Fetch inventory details
+User opens the “Create New Sales Order” form in the Streamlit UI.
 
-### Class / Method Diagram (Python Logic)
-class Order:
-create_order()
-validate_order()
-generate_sql_insert()
-update_inventory_log()
+Enters the following details:
 
+Customer Name
+
+Product
+
+Quantity
+
+Amount Collected
+
+
+
+2️⃣ Validation & Processing
+
+System validates all mandatory fields (e.g., Customer Name, Quantity).
+
+Checks stock availability for the selected product.
+
+Calculates order value = Quantity × Unit Price.
+
+3️⃣ Backend Logic (Python Layer)
+
+Generates the SQL INSERT query for the Orders table.
+
+Generates a corresponding SQL INSERT for the InventoryLog table to record stock deduction.
+
+Returns both SQL statements as output (prototype does not commit to the database).
+
+4️⃣ Response
+
+Streamlit UI displays confirmation with both generated SQL statements.
+
+🌐 REST API Endpoints (Illustrative Design)
+
+Below is a hypothetical REST API structure designed for future backend expansion.
+
+Method	Endpoint	Description
+POST	/api/v1/orders	Create a new sales order
+GET	/api/v1/customers	Retrieve all customers
+GET	/api/v1/inventory	Retrieve current inventory
+
+1️⃣ POST /api/v1/orders
+
+Purpose: Create a new sales order.
+
+Sample Input JSON
+{
+  "customer_name": "Customer 6",
+  "product_name": "Transformer Laminations",
+  "quantity": 10,
+  "amount_collected": 5000,
+  "last_payment_date": "2025-07-30"
+}
+
+Sample Output JSON
+{
+  "status": "success",
+  "message": "Order validated successfully",
+  "sql_queries": {
+    "insert_order": "INSERT INTO Orders (...) VALUES (...);",
+    "insert_inventory_log": "INSERT INTO InventoryLog (...) VALUES (...);"
+  }
+}
+
+2️⃣ GET /api/v1/customers
+
+Purpose: Retrieve list of all customers.
+
+Sample Response
+[
+  { "customer_id": 1, "customer_name": "Customer 1" },
+  { "customer_id": 2, "customer_name": "Customer 2" }
+]
+
+3️⃣ GET /api/v1/inventory
+
+Purpose: Retrieve product details and stock availability.
+
+Sample Response
+[
+  { "product_id": 1, "product_name": "Transformer Laminations", "stock_quantity": 120, "unit_price": 1500 },
+  { "product_id": 2, "product_name": "Motor Stamping", "stock_quantity": 80, "unit_price": 2000 }
+]
+
+🧱 Class / Method Diagram (Python Logic)
+ ┌────────────────┐
+ │ Streamlit Form │
+ └───────┬────────┘
+         │  user submits form
+         ▼
+ ┌────────────────────┐
+ │  OrderController   │
+ │  - handle_request()│
+ └───────┬────────────┘
+         │ calls
+         ▼
+ ┌────────────────────┐
+ │     Order Model    │
+ │ + validate_order() │
+ │ + create_order()   │
+ │ + generate_sql()   │
+ └───────┬────────────┘
+         │ generates SQL
+         ▼
+ ┌────────────────────┐
+ │  InventoryManager  │
+ │ + check_stock()    │
+ │ + update_log()     │
+ └───────┬────────────┘
+         │ returns result
+         ▼
+ ┌────────────────────┐
+ │  Streamlit Output  │
+ │  Displays SQL + UI │
+ └────────────────────┘
 
 ---
 
