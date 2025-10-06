@@ -222,6 +222,23 @@ Sample Response
 **Deployment:**  
 Deployed to Streamlit Cloud (live URL to be added).
 
+📊 New Features
+1️⃣ Inventory Stockout Prediction
+
+Predicts future stock levels for each product using recent order trends.
+
+Visualized as line chart over 30 days to anticipate potential stockouts.
+
+Helps plan procurement and avoid delays.
+
+2️⃣ Anomaly Detection in Transactions
+
+Flags unusually large orders compared to median quantity per product.
+
+Interactive dashboard displays orders with Anomaly = True.
+
+Supports fraud detection and operational insight.
+
 ---
 
 ## 7. Accessing the Project
