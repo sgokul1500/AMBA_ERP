@@ -1,76 +1,66 @@
 # ===============================
-# inventory.py - Data & Logic
+# inventory.py - Inventory & Analysis Functions
 # ===============================
 
 import pandas as pd
+import numpy as np
 from datetime import datetime, timedelta
 from sklearn.linear_model import LinearRegression
-import numpy as np
+from sklearn.ensemble import IsolationForest
 
 # -------------------------------
-# 1. Load Original Inventory Data
+# Sample Inventory Data
 # -------------------------------
-def load_inventory():
-    # Original stock data
-    return pd.DataFrame({
-        "Product Name": ["Transformer Laminations", "Motor Stamping", "Custom Parts"],
-        "Stock Quantity": [120, 80, 50],
-        "Unit Price": [1500, 2000, 500]
-    })
+inventory_df = pd.DataFrame({
+    "Product Name": ["Transformer Laminations", "Motor Stamping", "Custom Parts"],
+    "Stock Quantity": [120, 80, 50],
+    "Unit Price": [1500, 2000, 500]
+})
 
 # -------------------------------
-# 2. Load Orders Data
+# Sample Orders Data
 # -------------------------------
-def load_orders():
-    # Empty orders initially
-    return pd.DataFrame(columns=[
-        "customer_name", "product_name", "quantity",
-        "amount_collected", "last_payment_date", "order_date"
-    ])
+orders_df = pd.DataFrame(columns=[
+    "customer_name", "product_name", "quantity", "amount_collected", "last_payment_date", "order_date"
+])
 
 # -------------------------------
-# 3. Update Inventory After Order
+# Update Inventory
 # -------------------------------
-def update_inventory(inventory_df, product_name, quantity):
-    inventory_df.loc[inventory_df["Product Name"] == product_name, "Stock Quantity"] -= quantity
-    return inventory_df
+def update_inventory(inv_df, product_name, quantity_ordered):
+    inv_df.loc[inv_df["Product Name"] == product_name, "Stock Quantity"] -= quantity_ordered
+    return inv_df
 
 # -------------------------------
-# 4. Predict Stockout Days
+# Predict Stockout Days
 # -------------------------------
-def predict_stockout_days(inventory_df, orders_df):
-    predictions = {}
-    for product in inventory_df["Product Name"]:
+def predict_stockout_days(inv_df, orders_df):
+    result = []
+    for _, row in inv_df.iterrows():
+        product = row["Product Name"]
+        stock = row["Stock Quantity"]
+        # Filter orders for this product
         product_orders = orders_df[orders_df["product_name"] == product]
-        if len(product_orders) < 2:
-            predictions[product] = None
-            continue
-
-        # Use order quantities and dates to predict depletion
-        X = np.array([(datetime.today() - d).days for d in product_orders["order_date"]]).reshape(-1, 1)
-        y = product_orders["quantity"].values
-        model = LinearRegression()
-        model.fit(X, y)
-
-        # Estimate days to stockout
-        current_stock = inventory_df.loc[inventory_df["Product Name"] == product, "Stock Quantity"].values[0]
-        daily_rate = model.coef_[0] if model.coef_[0] > 0 else 1  # avoid zero or negative
-        days_to_stockout = max(int(current_stock / daily_rate), 1)
-        predictions[product] = days_to_stockout
-
-    return predictions
+        if product_orders.empty:
+            daily_rate = 0.5  # default usage
+        else:
+            # Use last 10 orders
+            recent_orders = product_orders.tail(10)
+            daily_rate = recent_orders["quantity"].mean()
+        predicted_days = stock / daily_rate if daily_rate > 0 else np.nan
+        result.append({"Product Name": product, "Predicted Stockout Days": predicted_days})
+    return pd.DataFrame(result)
 
 # -------------------------------
-# 5. Detect Anomalies in Orders
+# Anomaly Detection
 # -------------------------------
 def detect_anomalies(orders_df):
-    anomalies = []
-    for _, row in orders_df.iterrows():
-        if row["quantity"] > 1000:  # arbitrary threshold
-            anomalies.append({
-                "customer_name": row["customer_name"],
-                "product_name": row["product_name"],
-                "quantity": row["quantity"],
-                "reason": "Quantity unusually high"
-            })
-    return anomalies
+    if orders_df.empty:
+        return pd.DataFrame()
+    clf = IsolationForest(contamination=0.1, random_state=42)
+    X = orders_df[["quantity", "amount_collected"]].fillna(0)
+    clf.fit(X)
+    orders_df["anomaly"] = clf.predict(X)
+    return orders_df[orders_df["anomaly"] == -1][
+        ["customer_name", "product_name", "quantity", "amount_collected", "last_payment_date"]
+    ]
