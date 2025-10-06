@@ -95,15 +95,24 @@ elif page == "📦 Inventory Dashboard":
 # -------------------------------
 # Stockout Prediction
 # -------------------------------
+# -------------------------------
+# Stockout Prediction
+# -------------------------------
 elif page == "📈 Stockout Prediction":
     st.subheader("⏳ Inventory Stockout Prediction")
     product_selected = st.selectbox("Select Product to Predict Stockout 🏭", inventory_df["Product Name"].tolist())
     predicted_days = predict_stockout_days(product_selected)
+    
     st.metric(label=f"Predicted days before {product_selected} stockout", value=predicted_days)
-    st.bar_chart(pd.DataFrame({
-        "Days Remaining": [predicted_days],
-        "Product": [product_selected]
-    }))
+    
+    # Correct bar chart
+    stockout_chart_df = pd.DataFrame({
+        "Product": [product_selected],
+        "Days Remaining": [predicted_days]
+    }).set_index("Product")  # Set product as index for x-axis
+    
+    st.bar_chart(stockout_chart_df)
+
 
 # -------------------------------
 # Anomaly Detection
