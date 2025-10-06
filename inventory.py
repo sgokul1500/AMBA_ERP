@@ -1,34 +1,31 @@
 # ===============================
-# inventory.py - Inventory Management Functions
+# inventory.py - Helper Functions
 # ===============================
 
 import pandas as pd
 from datetime import datetime
 
-# Load initial inventory
 def load_inventory():
+    """Return initial inventory DataFrame"""
     return pd.DataFrame({
         "Product Name": ["Transformer Laminations", "Motor Stamping", "Custom Parts"],
         "Stock Quantity": [120, 80, 50],
-        "Unit Price ($)": [1500, 2000, 500]
+        "Unit Price": [1500, 2000, 500]
     })
 
-# Update stock after a new order
 def update_stock(product_name, quantity, inventory_df):
-    if product_name in inventory_df["Product Name"].values:
-        current_stock = inventory_df.loc[inventory_df["Product Name"] == product_name, "Stock Quantity"].values[0]
-        if quantity > current_stock:
-            return False, inventory_df  # Not enough stock
-        inventory_df.loc[inventory_df["Product Name"] == product_name, "Stock Quantity"] -= quantity
+    """Deduct stock for a given product. Returns success flag and updated DataFrame"""
+    idx = inventory_df.index[inventory_df["Product Name"] == product_name][0]
+    if inventory_df.at[idx, "Stock Quantity"] >= quantity:
+        inventory_df.at[idx, "Stock Quantity"] -= quantity
         return True, inventory_df
-    return False, inventory_df
+    else:
+        return False, inventory_df
 
-# Pseudo InventoryLog
-def log_inventory_transaction(product_name, quantity, transaction_type="OUT"):
-    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+def log_inventory_transaction(product_name, quantity):
+    """Return a dict representing a stock deduction event"""
     return {
         "product_name": product_name,
-        "transaction_type": transaction_type,
-        "quantity": quantity,
-        "transaction_date": timestamp
+        "quantity_deducted": quantity,
+        "transaction_date": datetime.today().strftime("%Y-%m-%d %H:%M:%S")
     }

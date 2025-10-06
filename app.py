@@ -1,32 +1,29 @@
 # ===============================
-# app.py - AMBA_ERP Fun Prototype with Dynamic Inventory
+# app.py - AMBA_ERP Final Fun Prototype
 # ===============================
 
 import streamlit as st
 import pandas as pd
 from datetime import datetime
-import time
 from inventory import load_inventory, update_stock, log_inventory_transaction
 
 # -------------------------------
 # Page Configuration
 # -------------------------------
 st.set_page_config(
-    page_title="AMBA-ERP",
+    page_title="AMBA-ERP",            # Tab title
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
 # -------------------------------
-# Load Data
+# Initialize Session State
 # -------------------------------
-@st.cache_data
-def load_customers():
-    return pd.read_excel("sample_inventory.xlsx")
+if "inventory_df" not in st.session_state:
+    st.session_state.inventory_df = load_inventory()
 
-customer_df = load_customers()
-inventory_df = load_inventory()
-inventory_log = []
+if "inventory_log" not in st.session_state:
+    st.session_state.inventory_log = []
 
 # -------------------------------
 # Sidebar / Navbar
@@ -36,18 +33,23 @@ page = st.sidebar.radio("Go to:", ["🏠 Customer Overview", "📝 Create New Or
 st.sidebar.markdown("---")
 st.sidebar.info("Select a page above to interact with the ERP system prototype!")
 
+# GitHub README badge
+st.sidebar.markdown("""
+[![GitHub](https://img.shields.io/badge/View%20on-GitHub-black?logo=github)](https://github.com/sgokul1500/AMBA_ERP/blob/main/README.md)
+""", unsafe_allow_html=True)
+
 # -------------------------------
 # Header
 # -------------------------------
-st.markdown("<h1 style='text-align: center; color: #4B0082;'> Amba ERP Prototype </h1>", unsafe_allow_html=True)
+st.markdown("<h1 style='text-align: center; color: #4B0082;'>Amba ERP Prototype</h1>", unsafe_allow_html=True)
 
 # -------------------------------
 # Page: Customer Overview
 # -------------------------------
 if page == "🏠 Customer Overview":
     st.subheader("📊 Customer Overview")
-    st.dataframe(customer_df)
-    st.markdown("💡 Tip: Shows all customer order values, collections, and outstanding balances.")
+    st.dataframe(load_inventory())  # Can add separate customer info if available
+    st.markdown("💡 Tip: Shows customer order values, collections, and outstanding balances.")
 
 # -------------------------------
 # Page: Create New Order
@@ -55,7 +57,7 @@ if page == "🏠 Customer Overview":
 elif page == "📝 Create New Order":
     st.subheader("🛒 Create a New Sales Order")
 
-    products = inventory_df["Product Name"].tolist()
+    products = st.session_state.inventory_df["Product Name"].tolist()
 
     with st.form("new_order_form"):
         customer_name = st.text_input("Customer Name (Type new or existing) 🧑‍💼")
@@ -71,16 +73,11 @@ elif page == "📝 Create New Order":
                 st.error("⚠️ Customer Name is required!")
             else:
                 # Check stock and update
-                success, inventory_df = update_stock(product_name, quantity, inventory_df)
+                success, st.session_state.inventory_df = update_stock(product_name, quantity, st.session_state.inventory_df)
                 if not success:
                     st.error("⚠️ Insufficient stock for this product!")
                 else:
-                    with st.spinner("Processing your order... ⏳"):
-                        for percent in range(0, 101, 10):
-                            time.sleep(0.05)
-                            st.progress(percent)
-
-                    # SQL INSERT statement (prototype)
+                    # Generate SQL (prototype only)
                     sql_insert_order = f"""
 INSERT INTO Orders (customer_name, product_name, quantity, amount_collected, last_payment_date, order_date)
 VALUES (
@@ -93,30 +90,32 @@ VALUES (
 );
 """
                     st.success("✅ Order validated successfully!")
+
+                    # Display SQL statement
+                    st.subheader("📝 Generated SQL for Orders Table")
                     st.code(sql_insert_order, language="sql")
 
                     # Log inventory transaction
                     transaction = log_inventory_transaction(product_name, quantity)
-                    inventory_log.append(transaction)
-
-                    st.subheader("📦 Updated Inventory After Order")
-                    st.dataframe(inventory_df)
-
-                    st.subheader("📝 Inventory Log")
-                    st.dataframe(pd.DataFrame(inventory_log))
-
-                    st.balloons()
+                    st.session_state.inventory_log.append(transaction)
 
 # -------------------------------
 # Page: Inventory Dashboard
 # -------------------------------
 elif page == "📦 Inventory Dashboard":
-    st.subheader("📦 Inventory Dashboard")
-    st.dataframe(inventory_df)
-    st.markdown("💡 Stock levels shown as plain numbers for simplicity.")
+    st.subheader("📦 Inventory Dashboard (Dynamic)")
+
+    # Show updated inventory
+    st.dataframe(st.session_state.inventory_df)
+    st.markdown("💡 Stock levels update automatically after new orders.")
+
+    # Show inventory log if any
+    if st.session_state.inventory_log:
+        st.subheader("📝 Inventory Log")
+        st.dataframe(pd.DataFrame(st.session_state.inventory_log))
 
 # -------------------------------
 # Footer
 # -------------------------------
 st.markdown("---")
-st.markdown("<h4 style='text-align: center; color: #FF1493;'>Developed by Gokul Srinivasan </h4>", unsafe_allow_html=True)
+st.markdown("<h4 style='text-align: center; color: #FF1493;'>Developed by Gokul Srinivasan</h4>", unsafe_allow_html=True)
