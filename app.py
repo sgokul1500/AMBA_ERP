@@ -7,6 +7,11 @@ import pandas as pd
 from datetime import datetime
 import time
 
+st.set_page_config(
+    page_title="AMBA-ERP",            # 👈 Changes tab title                  # 👈 Adds e
+    layout="wide",                    # Optional: makes it wide
+    initial_sidebar_state="expanded"  # Optional: sidebar open by default
+)
 # -------------------------------
 # 1. Load Data
 # -------------------------------
@@ -26,9 +31,9 @@ page = st.sidebar.radio("Go to:", ["🏠 Customer Overview", "📝 Create New Or
 st.sidebar.markdown("---")
 st.sidebar.info("Select a page above to interact with the ERP system prototype!")
 #GitHub Badge (opens README.md)
-st.sidebar.markdown(
-    "[![GitHub](https://img.shields.io/badge/View%20on-GitHub-black?logo=github)](https://github.com/sgokul1500/AMBA_ERP/blob/main/README.md)"
-)
+# st.sidebar.markdown(
+#     "[![GitHub](https://img.shields.io/badge/View%20on-GitHub-black?logo=github)](https://github.com/sgokul1500/AMBA_ERP/blob/main/README.md)"
+# )
 # -------------------------------
 # Header
 # -------------------------------
