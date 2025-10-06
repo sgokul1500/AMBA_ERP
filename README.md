@@ -228,7 +228,10 @@ Deployed to Streamlit Cloud (live URL to be added).
 
 ---
 
-## 7. Local Setup Instructions
+## 7. Accessing the Project
+[1]Live Public URL : https://ambaerp-mjxrds8zkotrzjvge6xcs6.streamlit.app
+
+[2]If you want to run the app locally then follow below:
 
 ```bash
 # Clone repo
