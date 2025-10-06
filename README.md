@@ -122,17 +122,18 @@ Streamlit UI displays confirmation with both generated SQL statements.
 🌐 REST API Endpoints (Illustrative Design)
 
 Below is a hypothetical REST API structure designed for future backend expansion.
-
+<pre>
 Method	Endpoint	Description
 POST	/api/v1/orders	Create a new sales order
 GET	/api/v1/customers	Retrieve all customers
 GET	/api/v1/inventory	Retrieve current inventory
-
+</pre>
 1️⃣ POST /api/v1/orders
 
 Purpose: Create a new sales order.
 
 Sample Input JSON
+<pre>
 {
   "customer_name": "Customer 6",
   "product_name": "Transformer Laminations",
@@ -140,8 +141,9 @@ Sample Input JSON
   "amount_collected": 5000,
   "last_payment_date": "2025-07-30"
 }
-
+</pre>
 Sample Output JSON
+<pre>
 {
   "status": "success",
   "message": "Order validated successfully",
@@ -150,16 +152,19 @@ Sample Output JSON
     "insert_inventory_log": "INSERT INTO InventoryLog (...) VALUES (...);"
   }
 }
+  </pre>
 
 2️⃣ GET /api/v1/customers
 
 Purpose: Retrieve list of all customers.
 
 Sample Response
+<pre>
 [
   { "customer_id": 1, "customer_name": "Customer 1" },
   { "customer_id": 2, "customer_name": "Customer 2" }
 ]
+  </pre>
 
 3️⃣ GET /api/v1/inventory
 
@@ -175,7 +180,39 @@ Sample Response
 
 
 🧱 Class / Method Diagram (Python Logic)
- 
+ <pre>
+    ┌────────────────┐
+ │ Streamlit Form │
+ └───────┬────────┘
+         │  user submits form
+         ▼
+ ┌────────────────────┐
+ │  OrderController   │
+ │  - handle_request()│
+ └───────┬────────────┘
+         │ calls
+         ▼
+ ┌────────────────────┐
+ │     Order Model    │
+ │ + validate_order() │
+ │ + create_order()   │
+ │ + generate_sql()   │
+ └───────┬────────────┘
+         │ generates SQL
+         ▼
+ ┌────────────────────┐
+ │  InventoryManager  │
+ │ + check_stock()    │
+ │ + update_log()     │
+ └───────┬────────────┘
+         │ returns result
+         ▼
+ ┌────────────────────┐
+ │  Streamlit Output  │
+ │  Displays SQL + UI │
+ └────────────────────┘
+
+ </pre>
 ---
 
 ## 6. Prototype & Deployment
