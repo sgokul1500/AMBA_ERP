@@ -89,14 +89,10 @@ User opens the “Create New Sales Order” form in the Streamlit UI.
 
 Enters the following details:
 
-Customer Name
-
-Product
-
-Quantity
-
-Amount Collected
-
+- Customer Name
+- Product
+- Quantity
+- Amount Collected
 
 
 2️⃣ Validation & Processing
@@ -229,9 +225,9 @@ Deployed to Streamlit Cloud (live URL to be added).
 ---
 
 ## 7. Accessing the Project
-[1]Live Public URL : https://ambaerp-mjxrds8zkotrzjvge6xcs6.streamlit.app
+[1] Live Public URL : https://ambaerp-mjxrds8zkotrzjvge6xcs6.streamlit.app
 
-[2]If you want to run the app locally then follow below:
+[2] If you want to run the app locally then follow below:
 
 ```bash
 # Clone repo
