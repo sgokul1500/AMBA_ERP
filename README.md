@@ -166,43 +166,16 @@ Sample Response
 Purpose: Retrieve product details and stock availability.
 
 Sample Response
+<pre>
 [
   { "product_id": 1, "product_name": "Transformer Laminations", "stock_quantity": 120, "unit_price": 1500 },
   { "product_id": 2, "product_name": "Motor Stamping", "stock_quantity": 80, "unit_price": 2000 }
 ]
+</pre>
+
 
 🧱 Class / Method Diagram (Python Logic)
- ┌────────────────┐
- │ Streamlit Form │
- └───────┬────────┘
-         │  user submits form
-         ▼
- ┌────────────────────┐
- │  OrderController   │
- │  - handle_request()│
- └───────┬────────────┘
-         │ calls
-         ▼
- ┌────────────────────┐
- │     Order Model    │
- │ + validate_order() │
- │ + create_order()   │
- │ + generate_sql()   │
- └───────┬────────────┘
-         │ generates SQL
-         ▼
- ┌────────────────────┐
- │  InventoryManager  │
- │ + check_stock()    │
- │ + update_log()     │
- └───────┬────────────┘
-         │ returns result
-         ▼
- ┌────────────────────┐
- │  Streamlit Output  │
- │  Displays SQL + UI │
- └────────────────────┘
-
+ 
 ---
 
 ## 6. Prototype & Deployment
