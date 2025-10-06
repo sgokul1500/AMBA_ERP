@@ -1,69 +1,58 @@
 # ===============================
-# inventory.py - Inventory and Order Logic
+# inventory.py - Inventory Management & Predictions
 # ===============================
 
 import pandas as pd
-from sklearn.linear_model import LinearRegression
-from sklearn.ensemble import IsolationForest
+import numpy as np
 from datetime import datetime
 
 # -------------------------------
-# Inventory Data
+# 1. Load initial inventory
 # -------------------------------
-inventory_df = pd.DataFrame({
-    "Product Name": ["Transformer Laminations", "Motor Stamping", "Custom Parts"],
-    "Stock Quantity": [120, 80, 50],
-    "Unit Price ($)": [1500, 2000, 500]
-})
+def load_inventory():
+    inventory_df = pd.DataFrame({
+        "Product Name": ["Transformer Laminations", "Motor Stamping", "Custom Parts"],
+        "Stock Quantity": [120, 80, 50],
+        "Unit Price": [1500, 2000, 500],
+        "Daily Usage Rate": [5, 4, 2]  # dummy usage rate for prediction
+    })
+    return inventory_df
 
-# Orders Data
+inventory_df = load_inventory()
+
+# -------------------------------
+# 2. Orders DataFrame
+# -------------------------------
 orders_df = pd.DataFrame(columns=[
-    "Customer Name", "Product Name", "Quantity",
-    "Amount Collected", "Last Payment Date", "Order Date"
+    "Customer Name", "Product Name", "Quantity", "Amount Collected", "Last Payment Date", "Order Date"
 ])
 
 # -------------------------------
-# Update Inventory
+# 3. Update Inventory Function
 # -------------------------------
-def update_inventory(product_name, quantity_ordered, customer_name, amount_collected, last_payment_date):
-    global inventory_df, orders_df
-    # Update stock
-    inventory_df.loc[inventory_df["Product Name"] == product_name, "Stock Quantity"] -= quantity_ordered
-    
-    # Add order to orders_df
-    new_order = {
-        "Customer Name": customer_name,
-        "Product Name": product_name,
-        "Quantity": quantity_ordered,
-        "Amount Collected": amount_collected,
-        "Last Payment Date": last_payment_date,
-        "Order Date": datetime.today().strftime("%Y-%m-%d")
-    }
-    orders_df = pd.concat([orders_df, pd.DataFrame([new_order])], ignore_index=True)
+def update_inventory(product_name, quantity):
+    global inventory_df
+    inventory_df.loc[inventory_df["Product Name"] == product_name, "Stock Quantity"] -= quantity
+    inventory_df["Stock Quantity"] = inventory_df["Stock Quantity"].clip(lower=0)
 
 # -------------------------------
-# Predict Stockout Days (Dummy ML)
+# 4. Predict Stockout Over Next N Days
 # -------------------------------
-def predict_stockout_days(product_name):
-    # Dummy model: linear regression on stock vs time
-    stock = inventory_df.loc[inventory_df["Product Name"] == product_name, "Stock Quantity"].values[0]
-    daily_sale_rate = 10  # assume 10 units/day
-    return max(stock // daily_sale_rate, 0)
+def predict_stockout_days(days=30):
+    pred_df = pd.DataFrame({"Day": np.arange(0, days+1)})
+    for _, row in inventory_df.iterrows():
+        stock = row["Stock Quantity"]
+        rate = row["Daily Usage Rate"]
+        pred = np.maximum(stock - rate * np.arange(0, days+1), 0)
+        pred_df[row["Product Name"]] = pred
+    return pred_df
 
 # -------------------------------
-# Anomaly Detection in Orders (Dummy ML)
+# 5. Anomaly Detection in Orders
 # -------------------------------
-def detect_anomalies():
+def detect_anomalies(order_quantity_threshold=50):
     if orders_df.empty:
-        return pd.DataFrame(columns=orders_df.columns)
-    
-    # Using IsolationForest for demo
-    clf = IsolationForest(contamination=0.1, random_state=42)
-    try:
-        clf.fit(orders_df[["Quantity", "Amount Collected"]])
-        preds = clf.predict(orders_df[["Quantity", "Amount Collected"]])
-        anomalies = orders_df[preds == -1]
-        return anomalies
-    except:
-        # If dataset too small, return empty
-        return pd.DataFrame(columns=orders_df.columns)
+        return pd.DataFrame(columns=["Product Name", "Quantity", "Flag"])
+    anomalies = orders_df[orders_df["Quantity"] > order_quantity_threshold].copy()
+    anomalies["Flag"] = "High Quantity Order"
+    return anomalies
