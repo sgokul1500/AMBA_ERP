@@ -1,18 +1,14 @@
 # ===============================
-# app.py - AMBA_ERP Fun Prototype with Interactive Sidebar/Navbar
+# app.py - AMBA_ERP Fun Prototype with Stock Prediction & Anomaly Detection
 # ===============================
 
 import streamlit as st
 import pandas as pd
 from datetime import datetime
 import time
-from inventory import (
-    inventory_df,
-    orders_df,
-    update_inventory,
-    predict_stockout_days,
-    detect_anomalies
-)
+import plotly.express as px
+
+from inventory import load_inventory, load_orders, update_inventory, predict_stockout_days, detect_anomalies
 
 # -------------------------------
 # Streamlit Page Config
@@ -24,22 +20,24 @@ st.set_page_config(
 )
 
 # -------------------------------
-# Initialize Session State
+# Load Data
 # -------------------------------
-if "orders" not in st.session_state:
-    st.session_state["orders"] = orders_df.copy()
 if "inventory" not in st.session_state:
-    st.session_state["inventory"] = inventory_df.copy()
+    st.session_state["inventory"] = load_inventory()
+if "orders" not in st.session_state:
+    st.session_state["orders"] = load_orders()
 
 # -------------------------------
 # Sidebar / Navbar
 # -------------------------------
 st.sidebar.title("🛠 Amba ERP Navigation")
-page = st.sidebar.radio(
-    "Go to:",
-    ["🏠 Customer Overview", "📝 Create New Order", "📦 Inventory Dashboard",
-     "📈 Stockout Prediction", "🚨 Anomaly Detection"]
-)
+page = st.sidebar.radio("Go to:", [
+    "🏠 Customer Overview",
+    "📝 Create New Order",
+    "📦 Inventory Dashboard",
+    "📈 Stockout Prediction",
+    "🚨 Anomaly Detection"
+])
 st.sidebar.markdown("---")
 st.sidebar.info("Select a page above to interact with the ERP system prototype!")
 
@@ -54,9 +52,7 @@ st.markdown("<h1 style='text-align: center; color: #4B0082;'> Amba ERP Prototype
 if page == "🏠 Customer Overview":
     st.subheader("📊 Customer Overview")
     st.dataframe(st.session_state["orders"])
-    st.markdown(
-        "💡 Tip: This shows all customer order values, collections, and outstanding balances."
-    )
+    st.markdown("💡 Tip: Shows all orders submitted by customers.")
 
 # -------------------------------
 # Page: Create New Order
@@ -71,20 +67,27 @@ elif page == "📝 Create New Order":
         quantity = st.number_input("Quantity 🔢", min_value=1, value=1)
         amount_collected = st.number_input("Amount Collected 💵", min_value=0.0, value=0.0, step=0.01)
         last_payment_date = st.date_input("Last Payment Date 📅 (Optional)", value=None)
-        submitted = st.form_submit_button("🚀 Submit Order")
 
+        submitted = st.form_submit_button("🚀 Submit Order")
         if submitted:
             if not customer_name.strip():
                 st.error("⚠️ Customer Name is required!")
-            elif quantity > st.session_state["inventory"].loc[
-                st.session_state["inventory"]["Product Name"] == product_name, "Stock Quantity"
-            ].values[0]:
-                st.error("⚠️ Insufficient stock for the selected product!")
             else:
-                with st.spinner("Processing your order... ⏳"):
-                    time.sleep(0.5)
+                # Update inventory dynamically
+                st.session_state["inventory"] = update_inventory(st.session_state["inventory"], product_name, quantity)
 
-                # SQL INSERT statement (Prototype)
+                # Append order
+                new_order = pd.DataFrame([{
+                    "customer_name": customer_name,
+                    "product_name": product_name,
+                    "quantity": quantity,
+                    "amount_collected": amount_collected,
+                    "last_payment_date": last_payment_date,
+                    "order_date": datetime.today().strftime("%Y-%m-%d")
+                }])
+                st.session_state["orders"] = pd.concat([st.session_state["orders"], new_order], ignore_index=True)
+
+                # Display SQL (prototype)
                 sql_insert_order = f"""
 INSERT INTO Orders (customer_name, product_name, quantity, amount_collected, last_payment_date, order_date)
 VALUES (
@@ -99,59 +102,37 @@ VALUES (
                 st.success("✅ Order validated successfully!")
                 st.code(sql_insert_order, language="sql")
 
-                # -------------------------------
-                # Update Inventory & Orders in Session
-                # -------------------------------
-                st.session_state["inventory"] = update_inventory(
-                    st.session_state["inventory"], product_name, quantity
-                )
-
-                new_order = pd.DataFrame([{
-                    "customer_name": customer_name,
-                    "product_name": product_name,
-                    "quantity": quantity,
-                    "amount_collected": amount_collected,
-                    "last_payment_date": last_payment_date,
-                    "order_date": datetime.today()
-                }])
-                st.session_state["orders"] = pd.concat(
-                    [st.session_state["orders"], new_order], ignore_index=True
-                )
-
 # -------------------------------
 # Page: Inventory Dashboard
 # -------------------------------
 elif page == "📦 Inventory Dashboard":
     st.subheader("📦 Inventory Dashboard")
     st.dataframe(st.session_state["inventory"])
-    st.markdown("💡 Stock levels shown as plain numbers for simplicity.")
+    st.markdown("💡 Current stock quantities.")
 
 # -------------------------------
 # Page: Stockout Prediction
 # -------------------------------
 elif page == "📈 Stockout Prediction":
     st.subheader("📈 Inventory Stockout Prediction")
-    predicted_days = predict_stockout_days(st.session_state["inventory"], st.session_state["orders"])
-    st.line_chart(predicted_days.set_index("Product Name")["Predicted Stockout Days"])
-    st.markdown("💡 Predicted days until stockout based on order trends.")
+    stock_sim = predict_stockout_days(st.session_state["inventory"], st.session_state["orders"], days_ahead=30)
+    fig = px.line(stock_sim, x="Day", y="Stock", color="Product",
+                  labels={"Stock":"Remaining Stock", "Day":"Days Ahead"},
+                  title="Projected Stock Levels Over Time")
+    st.plotly_chart(fig, use_container_width=True)
+    st.markdown("💡 Lines show projected stock depletion per product based on recent orders.")
 
 # -------------------------------
 # Page: Anomaly Detection
 # -------------------------------
 elif page == "🚨 Anomaly Detection":
-    st.subheader("🚨 Anomaly Detection in Transactions")
-    anomalies = detect_anomalies(st.session_state["orders"])
-    if anomalies.empty:
-        st.success("✅ No anomalies detected!")
-    else:
-        st.dataframe(anomalies)
-        st.markdown("⚠️ Highlighted transactions have unusual quantities or collection amounts.")
+    st.subheader("🚨 Transaction Anomalies")
+    anomalies_df = detect_anomalies(st.session_state["orders"])
+    st.dataframe(anomalies_df)
+    st.markdown("💡 Orders flagged as 'Anomaly = True' are unusually large compared to median quantities.")
 
 # -------------------------------
 # Footer
 # -------------------------------
 st.markdown("---")
-st.markdown(
-    "<h4 style='text-align: center; color: #FF1493;'>Developed by Gokul Srinivasan</h4>",
-    unsafe_allow_html=True
-)
+st.markdown("<h4 style='text-align: center; color: #FF1493;'>Developed by Gokul Srinivasan</h4>", unsafe_allow_html=True)
