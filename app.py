@@ -25,7 +25,10 @@ page = st.sidebar.radio("Go to:", ["🏠 Customer Overview", "📝 Create New Or
 
 st.sidebar.markdown("---")
 st.sidebar.info("Select a page above to interact with the ERP system prototype!")
-
+#GitHub Badge (opens README.md)
+st.sidebar.markdown(
+    "[![GitHub](https://img.shields.io/badge/View%20on-GitHub-black?logo=github)](https://github.com/sgokul1500/AMBA_ERP/blob/main/README.md)"
+)
 # -------------------------------
 # Header
 # -------------------------------
